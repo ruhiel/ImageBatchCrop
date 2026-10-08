@@ -143,6 +143,10 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         // 一括切り抜き
         // =========================
+        // =========================
+        // 一括切り抜き
+        // =========================
+
         private void ExecuteCrop()
         {
             if (ImageFiles.Count == 0)
@@ -156,8 +160,8 @@ namespace ImageBatchCrop.ViewModel
                 return;
             }
 
-            var successCount = 0;
-            var errorCount = 0;
+            int successCount = 0;
+            int errorCount = 0;
 
             foreach (var file in ImageFiles)
             {
@@ -172,7 +176,7 @@ namespace ImageBatchCrop.ViewModel
                 }
             }
 
-            // 元画像を再読み込み
+            // 切り抜き後の画像を再読み込み
             if (!string.IsNullOrEmpty(SelectedImage.Value))
             {
                 UpdateCurrentImage(SelectedImage.Value);
@@ -181,7 +185,8 @@ namespace ImageBatchCrop.ViewModel
             if (errorCount == 0)
             {
                 MessageBox.Show(
-                    $"{successCount} 個の画像を切り抜きました。",
+                    $"{successCount} 個の画像を切り抜きました。\n" +
+                    "元画像は backup フォルダに保存されています。",
                     "実行完了",
                     MessageBoxButton.OK,
                     MessageBoxImage.Information);
@@ -190,7 +195,8 @@ namespace ImageBatchCrop.ViewModel
             {
                 MessageBox.Show(
                     $"{successCount} 個の画像を切り抜きました。\n" +
-                    $"{errorCount} 個の画像でエラーが発生しました。",
+                    $"{errorCount} 個の画像でエラーが発生しました。\n\n" +
+                    "元画像は backup フォルダに保存されています。",
                     "実行完了",
                     MessageBoxButton.OK,
                     MessageBoxImage.Warning);
@@ -199,7 +205,33 @@ namespace ImageBatchCrop.ViewModel
 
         private void CropImage(string file)
         {
+            // =========================
+            // 元画像をバックアップ
+            // =========================
+            var directory = Path.GetDirectoryName(file)
+                ?? throw new InvalidOperationException(
+                    "画像ファイルのフォルダを取得できません。");
+
+            var backupDirectory = Path.Combine(
+                directory,
+                "backup");
+
+            Directory.CreateDirectory(backupDirectory);
+
+            var backupFile = Path.Combine(
+                backupDirectory,
+                Path.GetFileName(file));
+
+            // すでにバックアップが存在する場合は上書きしない
+            if (!File.Exists(backupFile))
+            {
+                File.Copy(file, backupFile);
+            }
+
+
+            // =========================
             // 画像を読み込む
+            // =========================
             var source = new BitmapImage();
 
             source.BeginInit();
@@ -208,42 +240,93 @@ namespace ImageBatchCrop.ViewModel
             source.EndInit();
             source.Freeze();
 
-            // 表示領域 800x450 → 元画像のピクセル座標へ変換
+
+            // =========================
+            // 表示座標 → 実画像座標
+            // =========================
             var scaleX = source.PixelWidth / DisplayWidth;
             var scaleY = source.PixelHeight / DisplayHeight;
 
-            var left = (int)Math.Round(CropLeft.Value * scaleX);
-            var top = (int)Math.Round(CropTop.Value * scaleY);
-            var width = (int)Math.Round(CropWidth.Value * scaleX);
-            var height = (int)Math.Round(CropHeight.Value * scaleY);
+            var left = (int)Math.Round(
+                CropLeft.Value * scaleX);
 
-            // 画像外にはみ出していた場合は補正
-            left = Math.Max(0, Math.Min(left, source.PixelWidth - 1));
-            top = Math.Max(0, Math.Min(top, source.PixelHeight - 1));
+            var top = (int)Math.Round(
+                CropTop.Value * scaleY);
 
-            width = Math.Min(width, source.PixelWidth - left);
-            height = Math.Min(height, source.PixelHeight - top);
+            var width = (int)Math.Round(
+                CropWidth.Value * scaleX);
+
+            var height = (int)Math.Round(
+                CropHeight.Value * scaleY);
+
+            // =========================
+            // 画像外にはみ出さないよう補正
+            // =========================
+            left = Math.Max(
+                0,
+                Math.Min(left, source.PixelWidth - 1));
+
+            top = Math.Max(
+                0,
+                Math.Min(top, source.PixelHeight - 1));
+
+            width = Math.Min(
+                width,
+                source.PixelWidth - left);
+
+            height = Math.Min(
+                height,
+                source.PixelHeight - top);
 
             if (width <= 0 || height <= 0)
             {
-                throw new InvalidOperationException("切り抜き範囲が画像外です。");
+                throw new InvalidOperationException(
+                    "切り抜き範囲が画像外です。");
             }
 
+            // =========================
             // 切り抜き
+            // =========================
             var cropped = new CroppedBitmap(
                 source,
-                new Int32Rect(left, top, width, height));
+                new Int32Rect(
+                    left,
+                    top,
+                    width,
+                    height));
 
             cropped.Freeze();
 
+
+            // =========================
             // 一時ファイルへ保存
+            // =========================
             var tempFile = file + ".tmp";
 
-            SaveImage(cropped, tempFile, Path.GetExtension(file));
+            try
+            {
+                SaveImage(
+                    cropped,
+                    tempFile,
+                    Path.GetExtension(file));
 
-            // 元ファイルを置き換え
-            File.Delete(file);
-            File.Move(tempFile, file);
+                // =========================
+                // 元ファイルを置き換え
+                // =========================
+
+                File.Delete(file);
+                File.Move(tempFile, file);
+            }
+            catch
+            {
+                // 失敗した場合は一時ファイルを削除
+                if (File.Exists(tempFile))
+                {
+                    File.Delete(tempFile);
+                }
+
+                throw;
+            }
         }
 
         private static void SaveImage(
