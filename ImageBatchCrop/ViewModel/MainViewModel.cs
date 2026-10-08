@@ -1,5 +1,4 @@
 ﻿using Reactive.Bindings;
-using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls.Primitives;
@@ -13,7 +12,6 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         // 矩形
         // =========================
-
         public ReactiveProperty<double> CropLeft { get; } = new(100);
         public ReactiveProperty<double> CropTop { get; } = new(80);
         public ReactiveProperty<double> CropWidth { get; } = new(180);
@@ -23,7 +21,6 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         // 画像
         // =========================
-
         public ReactiveCollection<string> ImageFiles { get; } = new();
 
         public ReactiveProperty<string> SelectedImage { get; set; } = new();
@@ -34,7 +31,6 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         // コマンド
         // =========================
-
         public ReactiveCommand<MouseButtonEventArgs> CropMouseLeftButtonDownCommand { get; }
 
         public ReactiveCommand<MouseEventArgs> CropMouseMoveCommand { get; }
@@ -53,7 +49,6 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         // ドラッグ状態
         // =========================
-
         private bool _isDragging;
 
         private Point _dragStart;
@@ -66,13 +61,11 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         // 定数
         // =========================
-
         private const double MinCropSize = 20;
 
         private const double DisplayWidth = 800;
 
         private const double DisplayHeight = 450;
-
 
         public MainViewModel()
         {
@@ -114,7 +107,6 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         // 画像
         // =========================
-
         private void UpdateCurrentImage(string? path)
         {
             if (string.IsNullOrEmpty(path))
@@ -151,7 +143,6 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         // 一括切り抜き
         // =========================
-
         private void ExecuteCrop()
         {
             if (ImageFiles.Count == 0)
@@ -165,8 +156,8 @@ namespace ImageBatchCrop.ViewModel
                 return;
             }
 
-            int successCount = 0;
-            int errorCount = 0;
+            var successCount = 0;
+            var errorCount = 0;
 
             foreach (var file in ImageFiles)
             {
@@ -206,11 +197,10 @@ namespace ImageBatchCrop.ViewModel
             }
         }
 
-
         private void CropImage(string file)
         {
             // 画像を読み込む
-            BitmapImage source = new BitmapImage();
+            var source = new BitmapImage();
 
             source.BeginInit();
             source.CacheOption = BitmapCacheOption.OnLoad;
@@ -219,13 +209,13 @@ namespace ImageBatchCrop.ViewModel
             source.Freeze();
 
             // 表示領域 800x450 → 元画像のピクセル座標へ変換
-            double scaleX = source.PixelWidth / DisplayWidth;
-            double scaleY = source.PixelHeight / DisplayHeight;
+            var scaleX = source.PixelWidth / DisplayWidth;
+            var scaleY = source.PixelHeight / DisplayHeight;
 
-            int left = (int)Math.Round(CropLeft.Value * scaleX);
-            int top = (int)Math.Round(CropTop.Value * scaleY);
-            int width = (int)Math.Round(CropWidth.Value * scaleX);
-            int height = (int)Math.Round(CropHeight.Value * scaleY);
+            var left = (int)Math.Round(CropLeft.Value * scaleX);
+            var top = (int)Math.Round(CropTop.Value * scaleY);
+            var width = (int)Math.Round(CropWidth.Value * scaleX);
+            var height = (int)Math.Round(CropHeight.Value * scaleY);
 
             // 画像外にはみ出していた場合は補正
             left = Math.Max(0, Math.Min(left, source.PixelWidth - 1));
@@ -235,7 +225,9 @@ namespace ImageBatchCrop.ViewModel
             height = Math.Min(height, source.PixelHeight - top);
 
             if (width <= 0 || height <= 0)
+            {
                 throw new InvalidOperationException("切り抜き範囲が画像外です。");
+            }
 
             // 切り抜き
             var cropped = new CroppedBitmap(
@@ -245,7 +237,7 @@ namespace ImageBatchCrop.ViewModel
             cropped.Freeze();
 
             // 一時ファイルへ保存
-            string tempFile = file + ".tmp";
+            var tempFile = file + ".tmp";
 
             SaveImage(cropped, tempFile, Path.GetExtension(file));
 
@@ -253,7 +245,6 @@ namespace ImageBatchCrop.ViewModel
             File.Delete(file);
             File.Move(tempFile, file);
         }
-
 
         private static void SaveImage(
             BitmapSource image,
@@ -302,7 +293,6 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         // ファイルドロップ
         // =========================
-
         private void FileDropAreaDragOver(DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -324,18 +314,21 @@ namespace ImageBatchCrop.ViewModel
             e.Handled = true;
         }
 
-
         private void FileDropAreaDrop(DragEventArgs e)
         {
             if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
                 return;
+            }
 
             var files = (string[])e.Data.GetData(DataFormats.FileDrop);
 
             foreach (var file in files)
             {
                 if (!IsImageFile(file))
+                {
                     continue;
+                }
 
                 if (!ImageFiles.Contains(file))
                 {
@@ -371,14 +364,17 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         // 矩形移動
         // =========================
-
         private void CropMouseLeftButtonDown(MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left)
+            {
                 return;
+            }
 
             if (e.OriginalSource is Thumb)
+            {
                 return;
+            }
 
             _isDragging = true;
 
@@ -399,12 +395,14 @@ namespace ImageBatchCrop.ViewModel
         private void CropMouseMove(MouseEventArgs e)
         {
             if (!_isDragging)
+            {
                 return;
+            }
 
-            Point current = e.GetPosition(null);
+            var current = e.GetPosition(null);
 
-            double dx = current.X - _dragStart.X;
-            double dy = current.Y - _dragStart.Y;
+            var dx = current.X - _dragStart.X;
+            var dy = current.Y - _dragStart.Y;
 
             CropLeft.Value = _dragStartLeft + dx;
             CropTop.Value = _dragStartTop + dy;
@@ -414,7 +412,9 @@ namespace ImageBatchCrop.ViewModel
         private void CropMouseLeftButtonUp(MouseButtonEventArgs e)
         {
             if (e.ChangedButton != MouseButton.Left)
+            {
                 return;
+            }
 
             _isDragging = false;
 
@@ -430,22 +430,25 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         // 矩形リサイズ
         // =========================
-
         private void ResizeCrop(DragDeltaEventArgs e)
         {
             if (e.OriginalSource is not Thumb thumb)
+            {
                 return;
+            }
 
             if (thumb.Tag is not string direction)
+            {
                 return;
+            }
 
-            double left = CropLeft.Value;
-            double top = CropTop.Value;
-            double width = CropWidth.Value;
-            double height = CropHeight.Value;
+            var left = CropLeft.Value;
+            var top = CropTop.Value;
+            var width = CropWidth.Value;
+            var height = CropHeight.Value;
 
-            double dx = e.HorizontalChange;
-            double dy = e.VerticalChange;
+            var dx = e.HorizontalChange;
+            var dy = e.VerticalChange;
 
             switch (direction)
             {
@@ -496,7 +499,9 @@ namespace ImageBatchCrop.ViewModel
             if (width < MinCropSize)
             {
                 if (direction.Contains("W"))
+                {
                     left -= MinCropSize - width;
+                }
 
                 width = MinCropSize;
             }
@@ -504,7 +509,9 @@ namespace ImageBatchCrop.ViewModel
             if (height < MinCropSize)
             {
                 if (direction.Contains("N"))
+                {
                     top -= MinCropSize - height;
+                }
 
                 height = MinCropSize;
             }
