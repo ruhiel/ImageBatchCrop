@@ -160,8 +160,8 @@ namespace ImageBatchCrop.ViewModel
                 return;
             }
 
-            int successCount = 0;
-            int errorCount = 0;
+            var successCount = 0;
+            var errorCount = 0;
 
             foreach (var file in ImageFiles)
             {
