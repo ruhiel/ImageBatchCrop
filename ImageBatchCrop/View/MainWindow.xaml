@@ -11,8 +11,9 @@
     xmlns:vm="clr-namespace:ImageBatchCrop.ViewModel"
     Title="Image Batch Crop"
     Width="1000"
-    Height="550"
+    Height="600"
     mc:Ignorable="d">
+
     <mah:MetroWindow.Resources>
 
         <Style x:Key="ResizeThumb" TargetType="Thumb">
@@ -26,231 +27,286 @@
         </Style>
 
     </mah:MetroWindow.Resources>
+
     <mah:MetroWindow.DataContext>
         <vm:MainViewModel />
     </mah:MetroWindow.DataContext>
 
     <Grid Margin="10">
 
-        <Grid.ColumnDefinitions>
-            <!--  画像表示：固定  -->
-            <ColumnDefinition Width="800" />
+        <Grid.RowDefinitions>
+            <!--  上部：実行ボタン  -->
+            <RowDefinition Height="45" />
 
-            <!--  区切り  -->
-            <ColumnDefinition Width="10" />
-
-            <!--  ファイル一覧  -->
-            <ColumnDefinition Width="140" />
-        </Grid.ColumnDefinitions>
+            <!--  下部：画像＋ファイル一覧  -->
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
 
         <!--  =========================  -->
-        <!--  左：画像表示  -->
+        <!--  上：実行ボタン  -->
         <!--  =========================  -->
-        <Border
-            Grid.Column="0"
-            Width="800"
-            Height="450"
-            Background="#F5F5F5"
-            BorderBrush="Gray"
-            BorderThickness="1">
 
-            <Grid>
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
 
-                <!--  画像  -->
-                <Image
-                    x:Name="MainImage"
-                    Width="800"
-                    Height="450"
-                    Source="{Binding CurrentImage.Value}"
-                    Stretch="Fill" />
+            <Button
+                Width="100"
+                Height="30"
+                Command="{Binding ExecuteCropCommand}"
+                Content="実行" />
 
-                <!--  矩形操作用  -->
-                <Canvas
-                    x:Name="CropCanvas"
-                    Width="800"
-                    Height="450"
-                    Background="Transparent">
-
-                    <!--  選択範囲  -->
-                    <Border
-                        x:Name="CropBorder"
-                        Canvas.Left="{Binding CropLeft.Value}"
-                        Canvas.Top="{Binding CropTop.Value}"
-                        Width="{Binding CropWidth.Value}"
-                        Height="{Binding CropHeight.Value}"
-                        Background="#20FF0000"
-                        BorderBrush="Red"
-                        BorderThickness="2">
-                        <i:Interaction.Triggers>
-                            <i:EventTrigger EventName="MouseLeftButtonDown">
-                                <rp:EventToReactiveCommand Command="{Binding CropMouseLeftButtonDownCommand}" />
-                            </i:EventTrigger>
-
-                            <i:EventTrigger EventName="MouseMove">
-                                <rp:EventToReactiveCommand Command="{Binding CropMouseMoveCommand}" />
-                            </i:EventTrigger>
-
-                            <i:EventTrigger EventName="MouseLeftButtonUp">
-                                <rp:EventToReactiveCommand Command="{Binding CropMouseLeftButtonUpCommand}" />
-                            </i:EventTrigger>
-                        </i:Interaction.Triggers>
-                        <Grid>
-
-                            <!--  四隅＋上下左右のハンドル  -->
-                            <Thumb
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Top"
-                                Style="{StaticResource ResizeThumb}"
-                                Tag="NW">
-                                <i:Interaction.Triggers>
-                                    <i:EventTrigger EventName="DragDelta">
-                                        <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
-                                    </i:EventTrigger>
-                                </i:Interaction.Triggers>
-                            </Thumb>
-
-                            <Thumb
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Top"
-                                Style="{StaticResource ResizeThumb}"
-                                Tag="N">
-                                <i:Interaction.Triggers>
-                                    <i:EventTrigger EventName="DragDelta">
-                                        <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
-                                    </i:EventTrigger>
-                                </i:Interaction.Triggers>
-                            </Thumb>
-
-                            <Thumb
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Top"
-                                Style="{StaticResource ResizeThumb}"
-                                Tag="NE">
-                                <i:Interaction.Triggers>
-                                    <i:EventTrigger EventName="DragDelta">
-                                        <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
-                                    </i:EventTrigger>
-                                </i:Interaction.Triggers>
-                            </Thumb>
-
-                            <Thumb
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Center"
-                                Style="{StaticResource ResizeThumb}"
-                                Tag="W">
-                                <i:Interaction.Triggers>
-                                    <i:EventTrigger EventName="DragDelta">
-                                        <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
-                                    </i:EventTrigger>
-                                </i:Interaction.Triggers>
-                            </Thumb>
-
-                            <Thumb
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Center"
-                                Style="{StaticResource ResizeThumb}"
-                                Tag="E">
-                                <i:Interaction.Triggers>
-                                    <i:EventTrigger EventName="DragDelta">
-                                        <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
-                                    </i:EventTrigger>
-                                </i:Interaction.Triggers>
-                            </Thumb>
-
-                            <Thumb
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Bottom"
-                                Style="{StaticResource ResizeThumb}"
-                                Tag="SW">
-                                <i:Interaction.Triggers>
-                                    <i:EventTrigger EventName="DragDelta">
-                                        <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
-                                    </i:EventTrigger>
-                                </i:Interaction.Triggers>
-                            </Thumb>
-
-                            <Thumb
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Bottom"
-                                Style="{StaticResource ResizeThumb}"
-                                Tag="S">
-                                <i:Interaction.Triggers>
-                                    <i:EventTrigger EventName="DragDelta">
-                                        <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
-                                    </i:EventTrigger>
-                                </i:Interaction.Triggers>
-                            </Thumb>
-
-                            <Thumb
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Bottom"
-                                Style="{StaticResource ResizeThumb}"
-                                Tag="SE">
-                                <i:Interaction.Triggers>
-                                    <i:EventTrigger EventName="DragDelta">
-                                        <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
-                                    </i:EventTrigger>
-                                </i:Interaction.Triggers>
-                            </Thumb>
-
-                        </Grid>
-
-                    </Border>
-
-                </Canvas>
-
-            </Grid>
-
-        </Border>
+        </StackPanel>
 
 
         <!--  =========================  -->
-        <!--  右：ファイル一覧  -->
+        <!--  下：メイン領域  -->
         <!--  =========================  -->
-        <Border
-            Grid.Column="2"
-            AllowDrop="True"
-            BorderBrush="Gray"
-            BorderThickness="1">
 
-            <i:Interaction.Triggers>
-                <i:EventTrigger EventName="DragOver">
-                    <rp:EventToReactiveCommand Command="{Binding FileDropAreaDragOverCommand}" />
-                </i:EventTrigger>
+        <Grid Grid.Row="1">
 
-                <i:EventTrigger EventName="Drop">
-                    <rp:EventToReactiveCommand Command="{Binding FileDropAreaDropCommand}" />
-                </i:EventTrigger>
-            </i:Interaction.Triggers>
+            <Grid.ColumnDefinitions>
 
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+                <!--  画像表示：固定  -->
+                <ColumnDefinition Width="800" />
 
-                <TextBlock
-                    Grid.Row="0"
-                    Margin="10,8"
-                    FontWeight="Bold"
-                    Text="対象ファイル" />
+                <!--  区切り  -->
+                <ColumnDefinition Width="10" />
 
-                <ListBox
-                    Grid.Row="1"
-                    Margin="5"
-                    ItemsSource="{Binding ImageFiles}"
-                    SelectedItem="{Binding SelectedImage}">
+                <!--  ファイル一覧  -->
+                <ColumnDefinition Width="140" />
 
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Margin="5,3" Text="{Binding}" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
+            </Grid.ColumnDefinitions>
 
-                </ListBox>
-            </Grid>
-        </Border>
+
+            <!--  =========================  -->
+            <!--  左：画像表示  -->
+            <!--  =========================  -->
+
+            <Border
+                Grid.Column="0"
+                Width="800"
+                Height="450"
+                Background="#F5F5F5"
+                BorderBrush="Gray"
+                BorderThickness="1">
+
+                <Grid>
+
+                    <!--  画像  -->
+                    <Image
+                        x:Name="MainImage"
+                        Width="800"
+                        Height="450"
+                        Source="{Binding CurrentImage.Value}"
+                        Stretch="Fill" />
+
+                    <!--  矩形操作用  -->
+                    <Canvas
+                        x:Name="CropCanvas"
+                        Width="800"
+                        Height="450"
+                        Background="Transparent">
+
+                        <!--  選択範囲  -->
+                        <Border
+                            x:Name="CropBorder"
+                            Canvas.Left="{Binding CropLeft.Value}"
+                            Canvas.Top="{Binding CropTop.Value}"
+                            Width="{Binding CropWidth.Value}"
+                            Height="{Binding CropHeight.Value}"
+                            Background="#20FF0000"
+                            BorderBrush="Red"
+                            BorderThickness="2">
+
+                            <i:Interaction.Triggers>
+
+                                <i:EventTrigger EventName="MouseLeftButtonDown">
+                                    <rp:EventToReactiveCommand Command="{Binding CropMouseLeftButtonDownCommand}" />
+                                </i:EventTrigger>
+
+                                <i:EventTrigger EventName="MouseMove">
+                                    <rp:EventToReactiveCommand Command="{Binding CropMouseMoveCommand}" />
+                                </i:EventTrigger>
+
+                                <i:EventTrigger EventName="MouseLeftButtonUp">
+                                    <rp:EventToReactiveCommand Command="{Binding CropMouseLeftButtonUpCommand}" />
+                                </i:EventTrigger>
+
+                            </i:Interaction.Triggers>
+
+                            <Grid>
+
+                                <!--  NW  -->
+                                <Thumb
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Style="{StaticResource ResizeThumb}"
+                                    Tag="NW">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="DragDelta">
+                                            <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </Thumb>
+
+                                <!--  N  -->
+                                <Thumb
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Top"
+                                    Style="{StaticResource ResizeThumb}"
+                                    Tag="N">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="DragDelta">
+                                            <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </Thumb>
+
+                                <!--  NE  -->
+                                <Thumb
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Style="{StaticResource ResizeThumb}"
+                                    Tag="NE">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="DragDelta">
+                                            <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </Thumb>
+
+                                <!--  W  -->
+                                <Thumb
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource ResizeThumb}"
+                                    Tag="W">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="DragDelta">
+                                            <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </Thumb>
+
+                                <!--  E  -->
+                                <Thumb
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource ResizeThumb}"
+                                    Tag="E">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="DragDelta">
+                                            <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </Thumb>
+
+                                <!--  SW  -->
+                                <Thumb
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Bottom"
+                                    Style="{StaticResource ResizeThumb}"
+                                    Tag="SW">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="DragDelta">
+                                            <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </Thumb>
+
+                                <!--  S  -->
+                                <Thumb
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Bottom"
+                                    Style="{StaticResource ResizeThumb}"
+                                    Tag="S">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="DragDelta">
+                                            <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </Thumb>
+
+                                <!--  SE  -->
+                                <Thumb
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Bottom"
+                                    Style="{StaticResource ResizeThumb}"
+                                    Tag="SE">
+                                    <i:Interaction.Triggers>
+                                        <i:EventTrigger EventName="DragDelta">
+                                            <rp:EventToReactiveCommand Command="{Binding ResizeCropCommand}" />
+                                        </i:EventTrigger>
+                                    </i:Interaction.Triggers>
+                                </Thumb>
+
+                            </Grid>
+
+                        </Border>
+
+                    </Canvas>
+
+                </Grid>
+
+            </Border>
+
+
+            <!--  =========================  -->
+            <!--  右：ファイル一覧  -->
+            <!--  =========================  -->
+
+            <Border
+                Grid.Column="2"
+                AllowDrop="True"
+                BorderBrush="Gray"
+                BorderThickness="1">
+
+                <i:Interaction.Triggers>
+
+                    <i:EventTrigger EventName="DragOver">
+                        <rp:EventToReactiveCommand Command="{Binding FileDropAreaDragOverCommand}" />
+                    </i:EventTrigger>
+
+                    <i:EventTrigger EventName="Drop">
+                        <rp:EventToReactiveCommand Command="{Binding FileDropAreaDropCommand}" />
+                    </i:EventTrigger>
+
+                </i:Interaction.Triggers>
+
+                <Grid>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock
+                        Grid.Row="0"
+                        Margin="10,8"
+                        FontWeight="Bold"
+                        Text="対象ファイル" />
+
+                    <ListBox
+                        Grid.Row="1"
+                        Margin="5"
+                        ItemsSource="{Binding ImageFiles}"
+                        SelectedItem="{Binding SelectedImage}">
+
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+
+                                <TextBlock Margin="5,3" Text="{Binding}" />
+
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+
+                    </ListBox>
+
+                </Grid>
+
+            </Border>
+
+        </Grid>
 
     </Grid>
 

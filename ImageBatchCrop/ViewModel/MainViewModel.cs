@@ -32,7 +32,7 @@ namespace ImageBatchCrop.ViewModel
 
 
         // =========================
-        // マウス操作
+        // コマンド
         // =========================
 
         public ReactiveCommand<MouseButtonEventArgs> CropMouseLeftButtonDownCommand { get; }
@@ -46,6 +46,8 @@ namespace ImageBatchCrop.ViewModel
         public ReactiveCommand<DragEventArgs> FileDropAreaDragOverCommand { get; }
 
         public ReactiveCommand<DragEventArgs> FileDropAreaDropCommand { get; }
+
+        public ReactiveCommand ExecuteCropCommand { get; }
 
 
         // =========================
@@ -66,6 +68,10 @@ namespace ImageBatchCrop.ViewModel
         // =========================
 
         private const double MinCropSize = 20;
+
+        private const double DisplayWidth = 800;
+
+        private const double DisplayHeight = 450;
 
 
         public MainViewModel()
@@ -93,6 +99,10 @@ namespace ImageBatchCrop.ViewModel
             FileDropAreaDropCommand =
                 new ReactiveCommand<DragEventArgs>()
                     .WithSubscribe(FileDropAreaDrop);
+
+            ExecuteCropCommand =
+                new ReactiveCommand()
+                    .WithSubscribe(ExecuteCrop);
 
 
             // 選択画像が変わったら左側の画像を更新
@@ -134,6 +144,157 @@ namespace ImageBatchCrop.ViewModel
             catch
             {
                 CurrentImage.Value = null;
+            }
+        }
+
+
+        // =========================
+        // 一括切り抜き
+        // =========================
+
+        private void ExecuteCrop()
+        {
+            if (ImageFiles.Count == 0)
+            {
+                MessageBox.Show(
+                    "対象画像ファイルがありません。",
+                    "実行",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                return;
+            }
+
+            int successCount = 0;
+            int errorCount = 0;
+
+            foreach (var file in ImageFiles)
+            {
+                try
+                {
+                    CropImage(file);
+                    successCount++;
+                }
+                catch
+                {
+                    errorCount++;
+                }
+            }
+
+            // 元画像を再読み込み
+            if (!string.IsNullOrEmpty(SelectedImage.Value))
+            {
+                UpdateCurrentImage(SelectedImage.Value);
+            }
+
+            if (errorCount == 0)
+            {
+                MessageBox.Show(
+                    $"{successCount} 個の画像を切り抜きました。",
+                    "実行完了",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show(
+                    $"{successCount} 個の画像を切り抜きました。\n" +
+                    $"{errorCount} 個の画像でエラーが発生しました。",
+                    "実行完了",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+
+
+        private void CropImage(string file)
+        {
+            // 画像を読み込む
+            BitmapImage source = new BitmapImage();
+
+            source.BeginInit();
+            source.CacheOption = BitmapCacheOption.OnLoad;
+            source.UriSource = new Uri(file, UriKind.Absolute);
+            source.EndInit();
+            source.Freeze();
+
+            // 表示領域 800x450 → 元画像のピクセル座標へ変換
+            double scaleX = source.PixelWidth / DisplayWidth;
+            double scaleY = source.PixelHeight / DisplayHeight;
+
+            int left = (int)Math.Round(CropLeft.Value * scaleX);
+            int top = (int)Math.Round(CropTop.Value * scaleY);
+            int width = (int)Math.Round(CropWidth.Value * scaleX);
+            int height = (int)Math.Round(CropHeight.Value * scaleY);
+
+            // 画像外にはみ出していた場合は補正
+            left = Math.Max(0, Math.Min(left, source.PixelWidth - 1));
+            top = Math.Max(0, Math.Min(top, source.PixelHeight - 1));
+
+            width = Math.Min(width, source.PixelWidth - left);
+            height = Math.Min(height, source.PixelHeight - top);
+
+            if (width <= 0 || height <= 0)
+                throw new InvalidOperationException("切り抜き範囲が画像外です。");
+
+            // 切り抜き
+            var cropped = new CroppedBitmap(
+                source,
+                new Int32Rect(left, top, width, height));
+
+            cropped.Freeze();
+
+            // 一時ファイルへ保存
+            string tempFile = file + ".tmp";
+
+            SaveImage(cropped, tempFile, Path.GetExtension(file));
+
+            // 元ファイルを置き換え
+            File.Delete(file);
+            File.Move(tempFile, file);
+        }
+
+
+        private static void SaveImage(
+            BitmapSource image,
+            string file,
+            string extension)
+        {
+            BitmapEncoder encoder;
+
+            switch (extension.ToLowerInvariant())
+            {
+                case ".jpg":
+                case ".jpeg":
+                    encoder = new JpegBitmapEncoder();
+                    break;
+
+                case ".png":
+                    encoder = new PngBitmapEncoder();
+                    break;
+
+                case ".bmp":
+                    encoder = new BmpBitmapEncoder();
+                    break;
+
+                case ".gif":
+                    encoder = new GifBitmapEncoder();
+                    break;
+
+                default:
+                    throw new NotSupportedException(
+                        $"この画像形式には対応していません: {extension}");
+            }
+
+            encoder.Frames.Add(BitmapFrame.Create(image));
+
+            using (var stream = new FileStream(
+                file,
+                FileMode.Create,
+                FileAccess.Write,
+                FileShare.None))
+            {
+                encoder.Save(stream);
             }
         }
 
@@ -221,7 +382,6 @@ namespace ImageBatchCrop.ViewModel
 
             _isDragging = true;
 
-            // 画面座標を取得
             _dragStart = e.GetPosition(null);
 
             _dragStartLeft = CropLeft.Value;
@@ -241,7 +401,6 @@ namespace ImageBatchCrop.ViewModel
             if (!_isDragging)
                 return;
 
-            // 開始時と同じ座標系で取得
             Point current = e.GetPosition(null);
 
             double dx = current.X - _dragStart.X;
