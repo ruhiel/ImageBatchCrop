@@ -27,10 +27,15 @@ namespace ImageBatchCrop.ViewModel
 
         public ReactiveProperty<BitmapImage?> CurrentImage { get; } = new();
 
+        // 画像の表示倍率（切り抜き座標自体は800×450基準のまま）
+        public ReactiveProperty<double> Zoom { get; } = new(1.0);
+
 
         // =========================
         // コマンド
         // =========================
+        public ReactiveCommand<MouseWheelEventArgs> ZoomImageCommand { get; }
+
         public ReactiveCommand<MouseButtonEventArgs> CropMouseLeftButtonDownCommand { get; }
 
         public ReactiveCommand<MouseEventArgs> CropMouseMoveCommand { get; }
@@ -67,8 +72,16 @@ namespace ImageBatchCrop.ViewModel
 
         private const double DisplayHeight = 450;
 
+        private const double MinZoom = 0.25;
+        private const double MaxZoom = 4.0;
+        private const double ZoomFactor = 1.1;
+
         public MainViewModel()
         {
+            ZoomImageCommand =
+                new ReactiveCommand<MouseWheelEventArgs>()
+                    .WithSubscribe(ZoomImage);
+
             CropMouseLeftButtonDownCommand =
                 new ReactiveCommand<MouseButtonEventArgs>()
                     .WithSubscribe(CropMouseLeftButtonDown);
@@ -103,6 +116,21 @@ namespace ImageBatchCrop.ViewModel
                 .Subscribe(path => UpdateCurrentImage(path));
         }
 
+
+        // =========================
+        // 画像ズーム
+        // =========================
+        private void ZoomImage(MouseWheelEventArgs e)
+        {
+            var zoom = Zoom.Value;
+
+            zoom = e.Delta > 0
+                ? zoom * ZoomFactor
+                : zoom / ZoomFactor;
+
+            Zoom.Value = Math.Clamp(zoom, MinZoom, MaxZoom);
+            e.Handled = true;
+        }
 
         // =========================
         // 画像
@@ -484,8 +512,9 @@ namespace ImageBatchCrop.ViewModel
 
             var current = e.GetPosition(null);
 
-            var dx = current.X - _dragStart.X;
-            var dy = current.Y - _dragStart.Y;
+            // マウスの移動量は表示倍率で割り、画像座標に変換する
+            var dx = (current.X - _dragStart.X) / Zoom.Value;
+            var dy = (current.Y - _dragStart.Y) / Zoom.Value;
 
             CropLeft.Value = _dragStartLeft + dx;
             CropTop.Value = _dragStartTop + dy;
@@ -530,8 +559,9 @@ namespace ImageBatchCrop.ViewModel
             var width = CropWidth.Value;
             var height = CropHeight.Value;
 
-            var dx = e.HorizontalChange;
-            var dy = e.VerticalChange;
+            // Thumbの移動量は画面座標なので、表示倍率で割って画像座標に戻す
+            var dx = e.HorizontalChange / Zoom.Value;
+            var dy = e.VerticalChange / Zoom.Value;
 
             switch (direction)
             {
