@@ -1,4 +1,5 @@
 ﻿using MahApps.Metro.Controls;
+using System.Windows.Input;
 
 namespace ImageBatchCrop.View
 {
@@ -11,5 +12,22 @@ namespace ImageBatchCrop.View
         {
             InitializeComponent();
         }
+
+        private void ImageBorder_PreviewMouseWheel(
+            object sender,
+            MouseWheelEventArgs e)
+        {
+            if ((Keyboard.Modifiers & ModifierKeys.Alt) != ModifierKeys.Alt)
+            {
+                return;
+            }
+
+            ImageScrollViewer.ScrollToHorizontalOffset(
+                ImageScrollViewer.HorizontalOffset - e.Delta);
+
+            // ScrollViewer の縦スクロール処理を抑止する
+            e.Handled = true;
+        }
+
     }
 }

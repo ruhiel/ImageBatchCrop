@@ -91,19 +91,22 @@
                 Background="#F5F5F5"
                 BorderBrush="Gray"
                 BorderThickness="1"
-                ClipToBounds="True">
+                ClipToBounds="True"
+                PreviewMouseWheel="ImageBorder_PreviewMouseWheel">
+
+                <!--  ScrollViewer がホイールを処理する前に修飾キー付き操作を処理する  -->
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="PreviewMouseWheel">
+                        <rp:EventToReactiveCommand Command="{Binding ZoomImageCommand}" />
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
 
                 <!--  拡大した画像をスクロールできるようにする  -->
                 <ScrollViewer
+                    x:Name="ImageScrollViewer"
                     CanContentScroll="False"
                     HorizontalScrollBarVisibility="Auto"
                     VerticalScrollBarVisibility="Auto">
-
-                    <i:Interaction.Triggers>
-                        <i:EventTrigger EventName="PreviewMouseWheel">
-                            <rp:EventToReactiveCommand Command="{Binding ZoomImageCommand}" />
-                        </i:EventTrigger>
-                    </i:Interaction.Triggers>
 
                     <Grid
                         Width="800"

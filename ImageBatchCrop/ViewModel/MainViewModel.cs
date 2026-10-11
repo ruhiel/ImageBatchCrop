@@ -1,6 +1,7 @@
 ﻿using Reactive.Bindings;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
@@ -122,14 +123,22 @@ namespace ImageBatchCrop.ViewModel
         // =========================
         private void ZoomImage(MouseWheelEventArgs e)
         {
-            var zoom = Zoom.Value;
+            // Ctrl + ホイール：拡大・縮小
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                var zoom = Zoom.Value;
 
-            zoom = e.Delta > 0
-                ? zoom * ZoomFactor
-                : zoom / ZoomFactor;
+                zoom = e.Delta > 0
+                    ? zoom * ZoomFactor
+                    : zoom / ZoomFactor;
 
-            Zoom.Value = Math.Clamp(zoom, MinZoom, MaxZoom);
-            e.Handled = true;
+                Zoom.Value = Math.Clamp(zoom, MinZoom, MaxZoom);
+                e.Handled = true;
+                return;
+            }
+
+            // Ctrlキーなしのホイール操作は ScrollViewer に任せる。
+            // Alt + ホイールの横スクロールは MainWindow の PreviewMouseWheel で処理する。
         }
 
         // =========================
