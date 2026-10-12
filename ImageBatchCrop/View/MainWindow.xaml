@@ -10,8 +10,8 @@
     xmlns:rp="clr-namespace:Reactive.Bindings.Interactivity;assembly=ReactiveProperty.WPF"
     xmlns:vm="clr-namespace:ImageBatchCrop.ViewModel"
     Title="Image Batch Crop"
-    Width="1050"
-    Height="600"
+    Width="1150"
+    Height="700"
     mc:Ignorable="d">
 
     <mah:MetroWindow.Resources>
@@ -158,7 +158,7 @@
             <Grid.ColumnDefinitions>
 
                 <!--  画像表示：固定  -->
-                <ColumnDefinition Width="800" />
+                <ColumnDefinition Width="900" />
 
                 <!--  区切り  -->
                 <ColumnDefinition Width="10" />
@@ -175,8 +175,8 @@
 
             <Border
                 Grid.Column="0"
-                Width="800"
-                Height="450"
+                Width="900"
+                Height="500"
                 Background="#F5F5F5"
                 BorderBrush="Gray"
                 BorderThickness="1"
@@ -193,12 +193,13 @@
                 <!--  拡大した画像をスクロールできるようにする  -->
                 <ScrollViewer
                     x:Name="ImageScrollViewer"
+                    Width="850"
                     CanContentScroll="False"
                     HorizontalScrollBarVisibility="Auto"
                     VerticalScrollBarVisibility="Auto">
 
                     <Grid
-                        Width="800"
+                        Width="850"
                         Height="450"
                         RenderTransformOrigin="0,0">
                         <Grid.LayoutTransform>
@@ -210,6 +211,7 @@
                             x:Name="MainImage"
                             Width="800"
                             Height="450"
+                            Margin="-40,0,40,0"
                             Source="{Binding CurrentImage.Value}"
                             Stretch="Fill" />
 
@@ -218,6 +220,7 @@
                             x:Name="CropCanvas"
                             Width="800"
                             Height="450"
+                            Margin="-40,0,40,0"
                             Background="Transparent">
 
                             <!--  選択範囲  -->
